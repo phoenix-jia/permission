@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.famesmart.privilege.mapper.UserCommsMapper">
+
+    <select id="selectCommByUserId" resultType="com.famesmart.privilege.entity.Comms">
+        select c.*
+        from saas_user_comms a
+        inner join comms c
+        on a.comm_id = c.id
+        where a.saas_user_id = #{userId}
+    </select>
+
+    <select id="selectUserByCommCode" resultType="com.famesmart.privilege.entity.Users">
+        select su.*
+        from saas_user_comms suc
+        inner join comms c
+        on suc.comm_id = c.id
+        inner join saas_users su
+        on suc.saas_user_id = su.id
+        where c.comm_code = #{commCode}
+    </select>
+
+</mapper>

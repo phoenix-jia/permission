@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.famesmart.privilege.mapper.RolesMapper">
+
+    <select id="selectByIdOrName" resultMap="rolesResult">
+        select sr.*, sp.*
+        from saas_roles sr
+        inner join saas_role_privileges srp
+        on sr.id = srp.saas_role_id
+        inner join saas_privileges sp
+        on srp.saas_privilege_id = sp.id
+        <where>
+            <if test="id != null">
+                sr.id = #{id}
+            </if>
+            <if test="name != null">
+                and sr.name = #{name}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="rolesResult" type="com.famesmart.privilege.entity.vo.RoleVO">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="deleted_at" property="deletedAt" />
+        <collection property="privileges" ofType="com.famesmart.privilege.entity.Privileges">
+            <id column="id" property="id" />
+            <result column="resource" property="resource" />
+            <result column="operation" property="operation" />
+            <result column="resource_zh" property="resourceZh" />
+            <result column="created_at" property="createdAt" />
+            <result column="updated_at" property="updatedAt" />
+            <result column="deleted_at" property="deletedAt" />
+        </collection>
+    </resultMap>
+</mapper>
