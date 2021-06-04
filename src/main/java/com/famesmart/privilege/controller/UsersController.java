@@ -29,7 +29,7 @@ public class UsersController {
     @GetMapping("/me")
     @ApiOperation(value = "获取当前用户", httpMethod = "GET")
     public Result me(@ApiIgnore @AuthenticationPrincipal UserDetailsCustom userDetailsCustom){
-        return Result.ok(userDetailsCustom);
+        return Result.ok(usersService.getByIdOrUsername(userDetailsCustom.getId(), null));
     }
 
     @GetMapping

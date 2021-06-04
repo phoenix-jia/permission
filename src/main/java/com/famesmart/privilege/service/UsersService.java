@@ -80,10 +80,16 @@ public class UsersService extends BaseService {
     }
 
     public UserVO getByIdOrUsername(Integer id, String username) {
+
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(id != null, "id", id);
         queryWrapper.eq(username != null, "username", username);
         Users users = usersMapper.selectOne(queryWrapper);
+
+        if (users == null) {
+            return null;
+        }
+
         UserVO userVO = modelMapper.map(users, UserVO.class);
 
         List<RoleVO> roles = userRolesService.selectByUserId(users.getId())
@@ -104,6 +110,12 @@ public class UsersService extends BaseService {
         queryWrapper.eq("phone", phone);
         List<Users> users = usersMapper.selectList(queryWrapper);
         return users == null || users.isEmpty() ? null : users.get(0);
+    }
+
+    public Users getByUsername(String username) {
+        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        return usersMapper.selectOne(queryWrapper);
     }
 
     public Users addUser(UserBO userBO) {
@@ -141,21 +153,6 @@ public class UsersService extends BaseService {
         }
 
         return user;
-    }
-
-    public Users getByUsername(String username) {
-        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", username);
-        return usersMapper.selectOne(queryWrapper);
-    }
-
-    public boolean checkRoleIdList(List<Integer> roleIdList) {
-        return !roleIdList.stream().allMatch(roleId ->
-                rolesService.getById(roleId) != null);
-    }
-
-    private Comms getComm(String commCode) {
-        return commsService.selectByCommCode(commCode);
     }
 
     public void updateUser(Integer id, UserBO userBO) {
@@ -229,11 +226,6 @@ public class UsersService extends BaseService {
         }
     }
 
-    public boolean checkCommAlarmIdList(List<Integer> commAlarmIdList) {
-        return !commAlarmIdList.stream().allMatch(commAlarmId ->
-                commAlarmsService.getById(commAlarmId) != null);
-    }
-
     public List<CommAlarmVO> getUserCommAlarm(UserDetailsCustom userDetailsCustom, String username) {
         Users user = null;
         if (StringUtils.isNotBlank(username) && (user = getByUsername(username)) == null) {
@@ -265,19 +257,9 @@ public class UsersService extends BaseService {
         List<String> commCodeList = userCommBO.getCommCodes();
         if (commCodeList != null) {
             getCommList(commCodeList).stream().map(Comms::getId).forEach(commId ->
-                userCommsService.insertUserComm(userCommBO.getUserId(), commId)
+                    userCommsService.insertUserComm(userCommBO.getUserId(), commId)
             );
         }
-    }
-
-    public List<Comms> getCommList(List<String> commCodeList) {
-        return commCodeList.stream().map(commCode -> {
-            Comms comm = commsService.selectByCommCode(commCode);
-            if (comm == null) {
-                throw new RuntimeException(String.format("invalid community code found: %s", commCode));
-            }
-            return comm;
-        }).collect(Collectors.toList());
     }
 
     public void getSensitiveAccess(Integer userId, String phone, String code) {
@@ -292,7 +274,7 @@ public class UsersService extends BaseService {
         if (StringUtils.isNotBlank(code)) {
             if (codeSaved == null) {
                 throw new RuntimeException("验证码已过期,请重新获取");
-               } else if (!codeSaved.equals(code)) {
+            } else if (!codeSaved.equals(code)) {
                 throw new RuntimeException("验证失败");
             }
             return;
@@ -312,6 +294,39 @@ public class UsersService extends BaseService {
         redisTemplate.opsForValue().set(key, rand.toString(), 5, TimeUnit.MINUTES);
     }
 
+    public void checkUserList(UserBO userBO) {
+        if (userBO.getRoleIds() != null && checkRoleIdList(userBO.getRoleIds())) {
+            throw new RuntimeException("invalid role id found");
+        }
+        if (userBO.getPrivilegeIds() != null && rolesService.checkPrivilegeIdList(userBO.getPrivilegeIds())) {
+            throw new RuntimeException("invalid privilege id found");
+        }
+    }
+
+    public boolean checkRoleIdList(List<Integer> roleIdList) {
+        return !roleIdList.stream().allMatch(roleId ->
+                rolesService.getById(roleId) != null);
+    }
+
+    private Comms getComm(String commCode) {
+        return commsService.selectByCommCode(commCode);
+    }
+
+    public boolean checkCommAlarmIdList(List<Integer> commAlarmIdList) {
+        return !commAlarmIdList.stream().allMatch(commAlarmId ->
+                commAlarmsService.getById(commAlarmId) != null);
+    }
+
+    public List<Comms> getCommList(List<String> commCodeList) {
+        return commCodeList.stream().map(commCode -> {
+            Comms comm = commsService.selectByCommCode(commCode);
+            if (comm == null) {
+                throw new RuntimeException(String.format("invalid community code found: %s", commCode));
+            }
+            return comm;
+        }).collect(Collectors.toList());
+    }
+
     private SmsResultBO sendSms(String phone, Integer rand) {
         SmsMessageBO smsMessageBO = new SmsMessageBO(Collections.singletonList(phone), 55821, Arrays.asList(rand, 5));
         log.info(JsonUtils.objectToJson(smsMessageBO));
@@ -326,14 +341,5 @@ public class UsersService extends BaseService {
     public void invalidCache(Integer id) {
         String key = userPrefix + id;
         redisTemplate.delete(key);
-    }
-
-    public void checkUserList(UserBO userBO) {
-        if (userBO.getRoleIds() != null && checkRoleIdList(userBO.getRoleIds())) {
-            throw new RuntimeException("invalid role id found");
-        }
-        if (userBO.getPrivilegeIds() != null && rolesService.checkPrivilegeIdList(userBO.getPrivilegeIds())) {
-            throw new RuntimeException("invalid privilege id found");
-        }
     }
 }

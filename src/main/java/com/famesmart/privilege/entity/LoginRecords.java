@@ -20,7 +20,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 @EqualsAndHashCode(callSuper = false)
-@TableName("login_records")
+@TableName("v2_login_records")
 @ApiModel(value="Records对象", description="")
 public class LoginRecords implements Serializable {
 
@@ -43,4 +43,6 @@ public class LoginRecords implements Serializable {
     @TableField(fill = FieldFill.INSERT_UPDATE, insertStrategy = FieldStrategy.IGNORED)
     private Date updatedAt;
 
+    @TableLogic
+    private Date deletedAt;
 }

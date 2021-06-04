@@ -17,7 +17,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("saas_user_comm_alarms")
+@TableName("v2_saas_user_comm_alarms")
 @ApiModel(value="UserCommAlarms对象", description="")
 public class UserCommAlarms implements Serializable {
 
@@ -31,6 +31,9 @@ public class UserCommAlarms implements Serializable {
 
     @TableField(fill = FieldFill.INSERT_UPDATE, insertStrategy = FieldStrategy.IGNORED)
     private Date updatedAt;
+
+    @TableLogic
+    private Date deletedAt;
 
     private Integer saasUserId;
 

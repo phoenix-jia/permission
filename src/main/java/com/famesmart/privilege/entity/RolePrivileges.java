@@ -17,7 +17,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("saas_role_privileges")
+@TableName("v2_saas_role_privileges")
 @ApiModel(value="RolePrivileges对象", description="")
 public class RolePrivileges implements Serializable {
 

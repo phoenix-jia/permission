@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("saas_users")
+@TableName("v2_saas_users")
 @ApiModel(value="Users对象", description="")
 public class Users implements Serializable {
 
