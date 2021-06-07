@@ -16,5 +16,4 @@ import java.util.List;
  */
 public interface UserPrivilegesMapper extends BaseMapper<UserPrivileges> {
 
-    List<Privileges> selectPrivilegeByUserId(Integer userId);
 }

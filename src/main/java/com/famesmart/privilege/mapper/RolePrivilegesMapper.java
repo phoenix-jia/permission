@@ -16,6 +16,6 @@ import java.util.List;
  */
 public interface RolePrivilegesMapper extends BaseMapper<RolePrivileges> {
 
-    @Select("select * from saas_role_privileges where saas_role_id = #{roleId} and deleted_at is null")
+    @Select("select * from v2_saas_role_privileges where saas_role_id = #{roleId} and deleted_at is null")
     List<RolePrivileges> selectByRoleId(Integer roleId);
 }

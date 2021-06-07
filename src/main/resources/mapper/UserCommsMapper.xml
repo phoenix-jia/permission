@@ -4,7 +4,7 @@
 
     <select id="selectCommByUserId" resultType="com.famesmart.privilege.entity.Comms">
         select c.*
-        from saas_user_comms a
+        from v2_saas_user_comms a
         inner join comms c
         on a.comm_id = c.id
         where a.saas_user_id = #{userId}
@@ -12,7 +12,7 @@
 
     <select id="selectUserByCommCode" resultType="com.famesmart.privilege.entity.Users">
         select su.*
-        from saas_user_comms suc
+        from v2_saas_user_comms suc
         inner join comms c
         on suc.comm_id = c.id
         inner join saas_users su

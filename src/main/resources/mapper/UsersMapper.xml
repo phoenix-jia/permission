@@ -5,7 +5,7 @@
         select a.*
         from saas_users a
         <if test="commCode != null">
-            inner join saas_user_comms b
+            inner join v2_saas_user_comms b
             on a.id = b.saas_user_id
             inner join comms c
             on b.comm_id = c.id
@@ -26,13 +26,13 @@
     <select id="selectCommAdmin" resultType="com.famesmart.privilege.entity.Users">
         select a.*
         from saas_users a
-        inner join saas_user_comms b
+        inner join v2_saas_user_comms b
         on a.id = b.saas_user_id
         inner join comms c
         on b.comm_id = c.id
-        inner join saas_user_roles d
+        inner join v2_saas_user_roles d
         on a.id = d.saas_user_id
-        inner join saas_roles e
+        inner join v2_saas_roles e
         on d.saas_role_id = e.id
         where c.comm_code = #{commCode}
         and e.name = 'admin'

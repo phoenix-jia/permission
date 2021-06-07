@@ -40,11 +40,11 @@ public class PrivilegesController {
     @GetMapping(value = "/{id}")
     @ApiOperation(value = "权限获取", httpMethod = "GET")
     public Result getById(@ApiParam(name = "id", value = "权限id", required = true)
-                                              @PathVariable String id) {
+                                              @PathVariable Integer id) {
         return Result.ok(privilegesService.getById(id));
     }
 
-    @PostMapping(value = "/")
+    @PostMapping
     @ApiOperation(value = "权限添加", httpMethod = "POST")
     public Result add(@RequestBody @Valid PrivilegeBO privilegeBO,
                                       @ApiIgnore BindingResult bindingResult) {

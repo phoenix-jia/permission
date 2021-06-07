@@ -3,13 +3,21 @@ package com.famesmart.privilege.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.famesmart.privilege.entity.Privileges;
+import com.famesmart.privilege.entity.UserComms;
 import com.famesmart.privilege.entity.UserPrivileges;
+import com.famesmart.privilege.mapper.PrivilegesMapper;
+import com.famesmart.privilege.mapper.UserCommsMapper;
 import com.famesmart.privilege.mapper.UserPrivilegesMapper;
+import com.famesmart.privilege.util.JsonUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -22,41 +30,76 @@ import java.util.List;
 @Service
 public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, UserPrivileges> {
 
+    static final String userPrivilegePrefix = "userPrivilege:";
+
     @Resource
     private UserPrivilegesMapper userPrivilegesMapper;
 
-    public void deleteByPrivilegeId(Integer id) {
-        QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("saas_privilege_id", id);
-        remove(queryWrapper);
-    }
+    @Resource
+    private PrivilegesService privilegesService;
 
-    public void insertUserPrivilege(Integer id, Integer privilegeId) {
+    @Autowired
+    StringRedisTemplate redisTemplate;
+
+    public void insertUserPrivilege(Integer userId, Integer privilegeId) {
         UserPrivileges userPrivilege = new UserPrivileges();
-        userPrivilege.setSaasUserId(id);
+        userPrivilege.setSaasUserId(userId);
         userPrivilege.setSaasPrivilegeId(privilegeId);
         userPrivilegesMapper.insert(userPrivilege);
+        invalidCache(userId);
     }
 
     public List<UserPrivileges> selectByUserId(Integer userId) {
-        QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("saas_user_id", userId);
-        return userPrivilegesMapper.selectList(queryWrapper);
+        String key = userPrivilegePrefix + userId;
+        String userPrivilegeStr = redisTemplate.opsForValue().get(key);
+        List<UserPrivileges> userPrivileges = null;
+        if (StringUtils.isNotBlank(userPrivilegeStr)) {
+            userPrivileges = JsonUtils.jsonToList(userPrivilegeStr, UserPrivileges.class);
+        } else {
+            QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("saas_user_id", userId);
+            userPrivileges = userPrivilegesMapper.selectList(queryWrapper);
+            userPrivilegeStr = JsonUtils.objectToJson(userPrivileges);
+            userPrivilegeStr = userPrivilegeStr != null ? userPrivilegeStr : "null";
+            redisTemplate.opsForValue().set(key, userPrivilegeStr, 1, TimeUnit.HOURS);
+        }
+        return userPrivileges;
     }
 
     public void deleteByUserId(Integer userId) {
         QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
         userPrivilegesMapper.delete(queryWrapper);
+        invalidCache(userId);
     }
 
-    public List<Privileges> getPrivilegeByUserId(Integer userId) {
-        return userPrivilegesMapper.selectPrivilegeByUserId(userId);
+    public void deleteByPrivilegeId(Integer id) {
+        QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("saas_privilege_id", id);
+        List<UserPrivileges> userPrivileges = userPrivilegesMapper.selectList(queryWrapper);
+        for (UserPrivileges userPrivilege : userPrivileges) {
+            invalidCache(userPrivilege.getSaasUserId());
+            userPrivilegesMapper.deleteById(userPrivilege.getId());
+        }
+    }
+
+    public void deleteByUserIdAndPrivilegeId(Integer userId, Integer userPrivilegeId) {
+        QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("saas_user_id", userId);
+        queryWrapper.eq("saas_privilege_id", userId);
+        userPrivilegesMapper.delete(queryWrapper);
+        invalidCache(userId);
     }
 
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
-        List<Privileges> privileges = userPrivilegesMapper.selectPrivilegeByUserId(userId);
-        return privileges.stream().anyMatch(privilege ->
-                privilege.getResource().equals(resource) && privilege.getOperation().equals(operation));
+        return selectByUserId(userId).stream()
+                .map(UserPrivileges::getSaasPrivilegeId)
+                .map(privilegeId -> privilegesService.getById(privilegeId))
+                .anyMatch(privilege -> privilege.getResource().equals(resource)
+                        && privilege.getOperation().equals(operation));
+    }
+
+    private void invalidCache(Integer userId) {
+        redisTemplate.delete(userPrivilegePrefix + userId);
     }
 }

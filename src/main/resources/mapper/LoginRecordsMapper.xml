@@ -5,7 +5,7 @@
     <select id="selectLoginTimes" resultType="com.famesmart.privilege.entity.vo.LoginTimesVO">
         select client_ip,
                count(*) as login_times
-        from login_records
+        from v2_login_records
         where username = #{username}
         group by client_ip
         order by login_times desc

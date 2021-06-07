@@ -14,5 +14,4 @@ import com.famesmart.privilege.entity.vo.RoleVO;
  */
 public interface RolesMapper extends BaseMapper<Roles> {
 
-    RoleVO selectByIdOrName(Integer id, String name);
 }

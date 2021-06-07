@@ -35,7 +35,7 @@ public class RolesController {
         return Result.ok(aPage);
     }
 
-    @GetMapping(value = "/")
+    @GetMapping
     @ApiOperation(value = "角色查询", httpMethod = "GET")
     public Result get(@ApiParam(name = "id", value = "角色ID")
                        @RequestParam(required = false) Integer id,

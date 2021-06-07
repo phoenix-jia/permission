@@ -7,7 +7,7 @@
                b.alarm_title,
                b.comm_code,
                b.alarm_rule_id
-        from saas_user_comm_alarms a
+        from v2_saas_user_comm_alarms a
         inner join comm_alarms b
         on a.comm_alarm_id = b.id
         where saas_user_id = #{userId}

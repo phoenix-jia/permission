@@ -16,9 +16,9 @@ import java.util.List;
  */
 public interface PrivilegesMapper extends BaseMapper<Privileges> {
 
-    @Select("select resource from saas_privileges where deleted_at is null group by resource")
+    @Select("select resource from v2_saas_privileges where deleted_at is null group by resource")
     List<String> selectAllResource();
 
-    @Select("select * from saas_privileges where resource = #{resource} and deleted_at is null")
+    @Select("select * from v2_saas_privileges where resource = #{resource} and deleted_at is null")
     List<Privileges> selectByResource(String resource);
 }

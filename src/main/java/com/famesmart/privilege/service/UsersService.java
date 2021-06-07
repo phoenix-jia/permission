@@ -3,7 +3,6 @@ package com.famesmart.privilege.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.famesmart.privilege.entity.*;
 import com.famesmart.privilege.entity.bo.*;
 import com.famesmart.privilege.entity.vo.CommAlarmVO;
@@ -12,7 +11,6 @@ import com.famesmart.privilege.entity.vo.UserVO;
 import com.famesmart.privilege.mapper.UsersMapper;
 import com.famesmart.privilege.security.UserDetailsCustom;
 import com.famesmart.privilege.util.JsonUtils;
-import com.famesmart.privilege.util.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
@@ -22,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -44,6 +43,9 @@ public class UsersService extends BaseService {
 
     @Autowired
     private RolesService rolesService;
+
+    @Autowired
+    private PrivilegesService privilegesService;
 
     @Autowired
     private CommsService commsService;
@@ -93,13 +95,19 @@ public class UsersService extends BaseService {
         UserVO userVO = modelMapper.map(users, UserVO.class);
 
         List<RoleVO> roles = userRolesService.selectByUserId(users.getId())
-                .stream()
+                .parallelStream()
                 .map(UserRoles::getSaasRoleId)
-                .map(roleId -> rolesService.getByRoleByIdOrName(roleId, null))
+                .map(roleId -> rolesService.getRoleVOById(roleId))
                 .collect(Collectors.toList());
         userVO.setRoles(roles);
 
-        userVO.setPrivileges(userPrivilegesService.getPrivilegeByUserId(users.getId()));
+        List<Privileges> privileges = userPrivilegesService.selectByUserId(users.getId())
+                .parallelStream()
+                .map(UserPrivileges::getSaasPrivilegeId)
+                .map(privilegeId -> privilegesService.getById(privilegeId))
+                .collect(Collectors.toList());
+
+        userVO.setPrivileges(privileges);
         userVO.setComms(userCommsService.getCommByUserId(users.getId()));
 
         return userVO;
@@ -175,7 +183,7 @@ public class UsersService extends BaseService {
                 }
             });
             userRoleIdSet.forEach(roleId -> {
-                userRolesService.deleteByRoleId(roleId);
+                userRolesService.deleteByUserIdAndRoleId(id, roleId);
             });
         }
 
@@ -190,7 +198,7 @@ public class UsersService extends BaseService {
                 }
             });
             userPrivilegeIdSet.forEach(userPrivilegeId -> {
-                userPrivilegesService.deleteByPrivilegeId(userPrivilegeId);
+                userPrivilegesService.deleteByUserIdAndPrivilegeId(id, userPrivilegeId);
             });
         }
 

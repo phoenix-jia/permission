@@ -3,14 +3,20 @@ package com.famesmart.privilege.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.famesmart.privilege.entity.Privileges;
+import com.famesmart.privilege.entity.UserComms;
 import com.famesmart.privilege.entity.UserPrivileges;
 import com.famesmart.privilege.mapper.PrivilegesMapper;
+import com.famesmart.privilege.mapper.UserCommsMapper;
 import com.famesmart.privilege.mapper.UserPrivilegesMapper;
+import com.famesmart.privilege.util.JsonUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -23,6 +29,8 @@ import java.util.List;
 @Service
 public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges> {
 
+    static final String privilegePrefix = "privilege:";
+
     @Resource
     private PrivilegesMapper privilegesMapper;
 
@@ -32,10 +40,29 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
     @Autowired
     private RolePrivilegesService rolePrivilegesService;
 
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    public Privileges getById(Integer id) {
+        String key = privilegePrefix + id;
+        String privilegeStr = redisTemplate.opsForValue().get(key);
+        Privileges privilege;
+        if (StringUtils.isNotBlank(privilegeStr)) {
+            privilege = JsonUtils.jsonToObject(privilegeStr, Privileges.class);
+        } else {
+            privilege = privilegesMapper.selectById(id);
+            privilegeStr = JsonUtils.objectToJson(privilege);
+            privilegeStr = privilegeStr != null ? privilegeStr : "null";
+            redisTemplate.opsForValue().set(key, privilegeStr, 1, TimeUnit.HOURS);
+        }
+        return privilege;
+    }
+
     public void deleteById(Integer id) {
-        removeById(id);
+        privilegesMapper.deleteById(id);
         userPrivilegesService.deleteByPrivilegeId(id);
         rolePrivilegesService.deleteByPrivilegeId(id);
+        invalidCache(id);
     }
 
     public List<String> selectAllResource() {
@@ -44,5 +71,9 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
 
     public List<Privileges> selectByResource(String resource) {
         return privilegesMapper.selectByResource(resource);
+    }
+
+    public void invalidCache(Integer id) {
+        redisTemplate.delete(privilegePrefix + id);
     }
 }
