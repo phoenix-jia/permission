@@ -97,14 +97,14 @@ public class UsersService extends BaseService {
         List<RoleVO> roles = userRolesService.selectByUserId(users.getId())
                 .parallelStream()
                 .map(UserRoles::getSaasRoleId)
-                .map(roleId -> rolesService.getRoleVOById(roleId))
+                .map(rolesService::getRoleVOById)
                 .collect(Collectors.toList());
         userVO.setRoles(roles);
 
         List<Privileges> privileges = userPrivilegesService.selectByUserId(users.getId())
                 .parallelStream()
                 .map(UserPrivileges::getSaasPrivilegeId)
-                .map(privilegeId -> privilegesService.getById(privilegeId))
+                .map(privilegesService::getById)
                 .collect(Collectors.toList());
 
         userVO.setPrivileges(privileges);
@@ -127,7 +127,7 @@ public class UsersService extends BaseService {
     }
 
     public Users addUser(UserBO userBO) {
-        if (getByUsername(userBO.getUsername()) == null) {
+        if (getByUsername(userBO.getUsername()) != null) {
             throw new RuntimeException("user already existed");
         }
 
@@ -197,8 +197,8 @@ public class UsersService extends BaseService {
                     userPrivilegesService.insertUserPrivilege(id, userPrivilegeId);
                 }
             });
-            userPrivilegeIdSet.forEach(userPrivilegeId -> {
-                userPrivilegesService.deleteByUserIdAndPrivilegeId(id, userPrivilegeId);
+            userPrivilegeIdSet.forEach(privilegeId -> {
+                userPrivilegesService.deleteByUserIdAndPrivilegeId(id, privilegeId);
             });
         }
 
@@ -312,7 +312,7 @@ public class UsersService extends BaseService {
     }
 
     public boolean checkRoleIdList(List<Integer> roleIdList) {
-        return !roleIdList.stream().allMatch(roleId ->
+        return !roleIdList.parallelStream().allMatch(roleId ->
                 rolesService.getById(roleId) != null);
     }
 
@@ -321,12 +321,12 @@ public class UsersService extends BaseService {
     }
 
     public boolean checkCommAlarmIdList(List<Integer> commAlarmIdList) {
-        return !commAlarmIdList.stream().allMatch(commAlarmId ->
+        return !commAlarmIdList.parallelStream().allMatch(commAlarmId ->
                 commAlarmsService.getById(commAlarmId) != null);
     }
 
     public List<Comms> getCommList(List<String> commCodeList) {
-        return commCodeList.stream().map(commCode -> {
+        return commCodeList.parallelStream().map(commCode -> {
             Comms comm = commsService.selectByCommCode(commCode);
             if (comm == null) {
                 throw new RuntimeException(String.format("invalid community code found: %s", commCode));

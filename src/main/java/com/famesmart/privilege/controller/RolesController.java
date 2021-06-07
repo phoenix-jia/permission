@@ -45,7 +45,7 @@ public class RolesController {
             return Result.error("missing id/name");
         }
 
-        return Result.ok(rolesService.getByRoleByIdOrName(id, name));
+        return Result.ok(rolesService.getRoleVOByIdOrName(id, name));
     }
 
     @PostMapping

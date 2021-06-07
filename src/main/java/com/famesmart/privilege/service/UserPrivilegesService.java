@@ -83,18 +83,18 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
         }
     }
 
-    public void deleteByUserIdAndPrivilegeId(Integer userId, Integer userPrivilegeId) {
+    public void deleteByUserIdAndPrivilegeId(Integer userId, Integer privilegeId) {
         QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
-        queryWrapper.eq("saas_privilege_id", userId);
+        queryWrapper.eq("saas_privilege_id", privilegeId);
         userPrivilegesMapper.delete(queryWrapper);
         invalidCache(userId);
     }
 
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
-        return selectByUserId(userId).stream()
+        return selectByUserId(userId).parallelStream()
                 .map(UserPrivileges::getSaasPrivilegeId)
-                .map(privilegeId -> privilegesService.getById(privilegeId))
+                .map(privilegesService::getById)
                 .anyMatch(privilege -> privilege.getResource().equals(resource)
                         && privilege.getOperation().equals(operation));
     }

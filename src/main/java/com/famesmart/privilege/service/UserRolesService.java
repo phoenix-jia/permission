@@ -87,9 +87,9 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
     }
 
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
-        return selectByUserId(userId).stream()
+        return selectByUserId(userId).parallelStream()
                 .map(UserRoles::getSaasRoleId)
-                .map(roleId -> rolesService.getRoleVOById(roleId))
+                .map(rolesService::getRoleVOById)
                 .flatMap(roleVO -> roleVO.getPrivileges().stream())
                 .anyMatch(privilege -> privilege.getResource().equals(resource)
                         && privilege.getOperation().equals(operation));
