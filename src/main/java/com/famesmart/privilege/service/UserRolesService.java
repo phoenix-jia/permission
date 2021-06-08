@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -36,6 +38,7 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
     @Autowired
     StringRedisTemplate redisTemplate;
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void insertUserRole(Integer userId, Integer roleId) {
         UserRoles userRole = new UserRoles();
         userRole.setSaasUserId(userId);
@@ -44,6 +47,7 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<UserRoles> selectByUserId(Integer userId) {
         String key = userRolePrefix + userId;
         String userRolesStr = redisTemplate.opsForValue().get(key);
@@ -56,11 +60,12 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
             userRoles = userRolesMapper.selectList(queryWrapper);
             userRolesStr = JsonUtils.objectToJson(userRoles);
             userRolesStr = userRolesStr != null ? userRolesStr : "null";
-            redisTemplate.opsForValue().set(key, userRolesStr, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(key, userRolesStr, 12, TimeUnit.HOURS);
         }
         return userRoles;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByUserId(Integer userId) {
         QueryWrapper<UserRoles> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
@@ -68,6 +73,7 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByRoleId(Integer roleId) {
         QueryWrapper<UserRoles> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_role_id", roleId);
@@ -78,6 +84,7 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByUserIdAndRoleId(Integer userId, Integer roleId) {
         QueryWrapper<UserRoles> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
@@ -86,6 +93,7 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
         return selectByUserId(userId).parallelStream()
                 .map(UserRoles::getSaasRoleId)

@@ -8,6 +8,7 @@ import com.famesmart.privilege.util.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -104,9 +105,10 @@ public class UsersController {
     public Result addCommAdmin(@ApiIgnore @AuthenticationPrincipal UserDetailsCustom userDetailsCustom,
                                @RequestBody @Valid UserBO userBO,
                                @ApiIgnore BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            return Result.error("missing username/password/platform");
+        if (bindingResult.hasErrors() || StringUtils.isBlank(userBO.getCommCode())) {
+            return Result.error("missing username/password/platform/commCode");
         }
+
         usersService.addCommAdmin(userBO);
         return Result.ok();
     }

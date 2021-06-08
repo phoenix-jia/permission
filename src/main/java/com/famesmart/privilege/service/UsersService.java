@@ -17,6 +17,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
@@ -76,11 +78,13 @@ public class UsersService extends BaseService {
 
     public static String basicInfoUrl = "http://api.saas.famesmart.com/basic-infos/smsSend";
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public IPage<Users> queryUserList(Integer pageNum, Integer pageSize, String position, Integer isAdmin, String commCode) {
         Page<Users> usersPage = new Page<>(pageNum, pageSize);
         return usersMapper.selectUserList(usersPage, position, isAdmin, commCode);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public UserVO getByIdOrUsername(Integer id, String username) {
 
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
@@ -113,6 +117,7 @@ public class UsersService extends BaseService {
         return userVO;
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Users getByPhone(String phone) {
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("phone", phone);
@@ -120,12 +125,14 @@ public class UsersService extends BaseService {
         return users == null || users.isEmpty() ? null : users.get(0);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Users getByUsername(String username) {
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
         return usersMapper.selectOne(queryWrapper);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public Users addUser(UserBO userBO) {
         if (getByUsername(userBO.getUsername()) != null) {
             throw new RuntimeException("user already existed");
@@ -163,6 +170,7 @@ public class UsersService extends BaseService {
         return user;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void updateUser(Integer id, UserBO userBO) {
         checkUserList(userBO);
         List<Integer> roleIdList = userBO.getRoleIds();
@@ -205,6 +213,7 @@ public class UsersService extends BaseService {
         invalidCache(id);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteUser(Integer id) {
         usersMapper.deleteById(id);
         userRolesService.deleteByUserId(id);
@@ -212,15 +221,18 @@ public class UsersService extends BaseService {
         invalidCache(id);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void addCommAdmin(UserBO userBO) {
         userBO.setRoleIds(Collections.singletonList(1));
         addUser(userBO);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Users getCommAdmin(String commCode) {
         return usersMapper.selectCommAdmin(commCode);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void addUserCommAlarm(UserCommAlarmBO userCommAlarmBO) {
         List<Integer> commAlarmIdList = userCommAlarmBO.getCommAlarmIds();
         if (commAlarmIdList != null && checkCommAlarmIdList(commAlarmIdList)) {
@@ -234,6 +246,7 @@ public class UsersService extends BaseService {
         }
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<CommAlarmVO> getUserCommAlarm(UserDetailsCustom userDetailsCustom, String username) {
         Users user = null;
         if (StringUtils.isNotBlank(username) && (user = getByUsername(username)) == null) {
@@ -244,6 +257,7 @@ public class UsersService extends BaseService {
         return userCommAlarmsService.getCommAlarmByUserId(userId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<Comms> getUserComm(UserDetailsCustom userDetailsCustom, Integer userId, String username) {
         Integer userIdUsed = null;
         if (userId != null) {
@@ -261,6 +275,7 @@ public class UsersService extends BaseService {
         return userCommsService.getCommByUserId(userIdUsed);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void addUserComm(UserCommBO userCommBO) {
         List<String> commCodeList = userCommBO.getCommCodes();
         if (commCodeList != null) {
@@ -270,6 +285,7 @@ public class UsersService extends BaseService {
         }
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public void getSensitiveAccess(Integer userId, String phone, String code) {
 
         if (StringUtils.isBlank(phone)) {
@@ -316,7 +332,7 @@ public class UsersService extends BaseService {
                 rolesService.getById(roleId) != null);
     }
 
-    private Comms getComm(String commCode) {
+    public Comms getComm(String commCode) {
         return commsService.selectByCommCode(commCode);
     }
 

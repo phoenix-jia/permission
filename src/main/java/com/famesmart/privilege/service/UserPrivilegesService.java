@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -41,6 +43,7 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
     @Autowired
     StringRedisTemplate redisTemplate;
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void insertUserPrivilege(Integer userId, Integer privilegeId) {
         UserPrivileges userPrivilege = new UserPrivileges();
         userPrivilege.setSaasUserId(userId);
@@ -49,6 +52,7 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<UserPrivileges> selectByUserId(Integer userId) {
         String key = userPrivilegePrefix + userId;
         String userPrivilegeStr = redisTemplate.opsForValue().get(key);
@@ -61,11 +65,12 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
             userPrivileges = userPrivilegesMapper.selectList(queryWrapper);
             userPrivilegeStr = JsonUtils.objectToJson(userPrivileges);
             userPrivilegeStr = userPrivilegeStr != null ? userPrivilegeStr : "null";
-            redisTemplate.opsForValue().set(key, userPrivilegeStr, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(key, userPrivilegeStr, 12, TimeUnit.HOURS);
         }
         return userPrivileges;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByUserId(Integer userId) {
         QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
@@ -73,6 +78,7 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByPrivilegeId(Integer id) {
         QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_privilege_id", id);
@@ -83,6 +89,7 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByUserIdAndPrivilegeId(Integer userId, Integer privilegeId) {
         QueryWrapper<UserPrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
@@ -91,6 +98,7 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
         invalidCache(userId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
         return selectByUserId(userId).parallelStream()
                 .map(UserPrivileges::getSaasPrivilegeId)

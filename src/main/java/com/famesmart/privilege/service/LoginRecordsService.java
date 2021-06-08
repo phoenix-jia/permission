@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
@@ -35,6 +37,7 @@ public class LoginRecordsService extends ServiceImpl<LoginRecordsMapper, LoginRe
    @Autowired
    private RestTemplate restTemplate;
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public IPage<LoginRecords> queryUserLoginRecord(Integer pageNum, Integer pageSize, String username, String clientIp, String clientAddress, String commCode) {
         Page<LoginRecords> page = new Page<>(pageNum, pageSize);
         QueryWrapper<LoginRecords> queryWrapper = new QueryWrapper<>();

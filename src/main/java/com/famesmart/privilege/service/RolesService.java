@@ -14,6 +14,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
@@ -53,11 +55,13 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+
     public RoleVO getRoleVOByIdOrName(Integer id, String name) {
         return id != null ? getRoleVOById(id) : getRoleVOByName(name);
     }
 
-    private RoleVO getRoleVOByName(String name) {
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public RoleVO getRoleVOByName(String name) {
         QueryWrapper<Roles> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
         Roles role = rolesMapper.selectOne(queryWrapper);
@@ -67,7 +71,8 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
     public RoleVO getRoleVOById(Integer id) {
         Roles role = getRoleById(id);
         RoleVO roleVO = modelMapper.map(role, RoleVO.class);
-        List<Privileges> privileges =  rolePrivilegesService.selectByRoleId(id).parallelStream()
+        List<Privileges> privileges =  rolePrivilegesService.selectByRoleId(id)
+                .parallelStream()
                 .map(RolePrivileges::getSaasPrivilegeId)
                 .map(privilegesService::getById)
                 .collect(Collectors.toList());
@@ -85,11 +90,12 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
             role = rolesMapper.selectById(id);
             roleStr = JsonUtils.objectToJson(role);
             roleStr = roleStr != null ? roleStr : "null";
-            redisTemplate.opsForValue().set(key, roleStr, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(key, roleStr, 12, TimeUnit.HOURS);
         }
         return role;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public Roles addRole(RoleBO roleBO) {
         List<Integer> privilegeIdList = roleBO.getPrivilegeIds();
         if (privilegeIdList != null && checkPrivilegeIdList(privilegeIdList)) {
@@ -107,6 +113,7 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
         return role;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void updateRole(Integer id, RoleBO roleBO) {
         List<Integer> privilegeIdList = roleBO.getPrivilegeIds();
         if (privilegeIdList != null && checkPrivilegeIdList(privilegeIdList)) {
@@ -137,6 +144,7 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
         invalidCache(id);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteRole(Integer id) {
         removeById(id);
         userRolesService.deleteByRoleId(id);

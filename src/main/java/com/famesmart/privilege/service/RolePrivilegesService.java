@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -33,6 +35,7 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
     @Resource
     private RolePrivilegesMapper rolePrivilegesMapper;
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void insertRolePrivilege(Integer roleId, Integer privilegeId) {
         RolePrivileges rolePrivilege = new RolePrivileges();
         rolePrivilege.setSaasRoleId(roleId);
@@ -41,6 +44,7 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
         invalidCache(roleId);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<RolePrivileges> selectByRoleId(Integer roleId) {
         String key = rolePrivilegesPrefix + roleId;
         String rolePrivilegesStr = redisTemplate.opsForValue().get(key);
@@ -51,11 +55,12 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
             rolePrivileges = rolePrivilegesMapper.selectByRoleId(roleId);
             rolePrivilegesStr = JsonUtils.objectToJson(rolePrivileges);
             rolePrivilegesStr = rolePrivilegesStr != null ? rolePrivilegesStr : "null";
-            redisTemplate.opsForValue().set(key, rolePrivilegesStr, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(key, rolePrivilegesStr, 12, TimeUnit.HOURS);
         }
         return rolePrivileges;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByPrivilegeId(Integer privilegeId) {
         QueryWrapper<RolePrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_privilege_id", privilegeId);
@@ -66,6 +71,7 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByRoleIdAndPrivilegeId(Integer roleId, Integer privilegeId) {
         QueryWrapper<RolePrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_role_id", roleId);
@@ -74,14 +80,16 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
         invalidCache(roleId);
     }
 
-    public void invalidCache(Integer id) {
-        redisTemplate.delete(rolePrivilegesPrefix + id);
-    }
-
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByRoleId(Integer roleId) {
         QueryWrapper<RolePrivileges> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_role_id", roleId);
         rolePrivilegesMapper.delete(queryWrapper);
         invalidCache(roleId);
     }
+
+    public void invalidCache(Integer id) {
+        redisTemplate.delete(rolePrivilegesPrefix + id);
+    }
+
 }

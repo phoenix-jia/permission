@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -43,6 +45,7 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Privileges getById(Integer id) {
         String key = privilegePrefix + id;
         String privilegeStr = redisTemplate.opsForValue().get(key);
@@ -53,11 +56,12 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
             privilege = privilegesMapper.selectById(id);
             privilegeStr = JsonUtils.objectToJson(privilege);
             privilegeStr = privilegeStr != null ? privilegeStr : "null";
-            redisTemplate.opsForValue().set(key, privilegeStr, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(key, privilegeStr, 12, TimeUnit.HOURS);
         }
         return privilege;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteById(Integer id) {
         privilegesMapper.deleteById(id);
         userPrivilegesService.deleteByPrivilegeId(id);

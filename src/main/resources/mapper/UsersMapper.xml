@@ -3,7 +3,7 @@
 <mapper namespace="com.famesmart.privilege.mapper.UsersMapper">
     <select id="selectUserList" resultType="com.famesmart.privilege.entity.Users">
         select a.*
-        from saas_users a
+        from v2_saas_users a
         <if test="commCode != null">
             inner join v2_saas_user_comms b
             on a.id = b.saas_user_id
@@ -25,7 +25,7 @@
 
     <select id="selectCommAdmin" resultType="com.famesmart.privilege.entity.Users">
         select a.*
-        from saas_users a
+        from v2_saas_users a
         inner join v2_saas_user_comms b
         on a.id = b.saas_user_id
         inner join comms c

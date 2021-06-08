@@ -6,6 +6,8 @@ import com.famesmart.privilege.entity.Comms;
 import com.famesmart.privilege.entity.Users;
 import com.famesmart.privilege.mapper.CommsMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
@@ -23,6 +25,7 @@ public class CommsService extends ServiceImpl<CommsMapper, Comms> {
     @Resource
     private CommsMapper commsMapper;
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public Comms selectByCommCode(String commCode) {
         QueryWrapper<Comms> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("comm_code", commCode);

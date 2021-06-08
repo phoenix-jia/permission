@@ -7,6 +7,8 @@ import com.famesmart.privilege.entity.UserRoles;
 import com.famesmart.privilege.entity.vo.CommAlarmVO;
 import com.famesmart.privilege.mapper.UserCommAlarmsMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -25,6 +27,7 @@ public class UserCommAlarmsService extends ServiceImpl<UserCommAlarmsMapper, Use
     @Resource
     private UserCommAlarmsMapper userCommAlarmsMapper;
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void insertUserCommAlarm(Integer userId, Integer commAlarmId) {
         UserCommAlarms userCommAlarms = new UserCommAlarms();
         userCommAlarms.setSaasUserId(userId);
@@ -32,10 +35,12 @@ public class UserCommAlarmsService extends ServiceImpl<UserCommAlarmsMapper, Use
         save(userCommAlarms);
     }
 
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<CommAlarmVO> getCommAlarmByUserId(Integer userId) {
         return userCommAlarmsMapper.selectCommAlarmByUserId(userId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteByUserId(Integer userId) {
         QueryWrapper<UserCommAlarms> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("saas_user_id", userId);
