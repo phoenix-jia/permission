@@ -16,13 +16,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -42,6 +42,9 @@ public class UsersService extends BaseService {
 
     @Resource
     private UsersMapper usersMapper;
+
+    @Resource
+    private UserDetailsCustomService userDetailsCustomService;
 
     @Autowired
     private RolesService rolesService;
@@ -87,32 +90,19 @@ public class UsersService extends BaseService {
     @Transactional(propagation = Propagation.SUPPORTS)
     public UserVO getByIdOrUsername(Integer id, String username) {
 
-        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(id != null, "id", id);
-        queryWrapper.eq(username != null, "username", username);
-        Users users = usersMapper.selectOne(queryWrapper);
+        UserDetails userDetails = id != null
+                ? userDetailsCustomService.loadUserById(id.toString())
+                : userDetailsCustomService.loadUserByUsername(username);
 
-        if (users == null) {
+        if (userDetails == null) {
             return null;
         }
 
-        UserVO userVO = modelMapper.map(users, UserVO.class);
-
-        List<RoleVO> roles = userRolesService.selectByUserId(users.getId())
-                .parallelStream()
-                .map(UserRoles::getSaasRoleId)
-                .map(rolesService::getRoleVOById)
-                .collect(Collectors.toList());
-        userVO.setRoles(roles);
-
-        List<Privileges> privileges = userPrivilegesService.selectByUserId(users.getId())
-                .parallelStream()
-                .map(UserPrivileges::getSaasPrivilegeId)
-                .map(privilegesService::getById)
-                .collect(Collectors.toList());
-
-        userVO.setPrivileges(privileges);
-        userVO.setComms(userCommsService.getCommByUserId(users.getId()));
+        UserDetailsCustom user = (UserDetailsCustom) userDetails;
+        UserVO userVO = modelMapper.map(user, UserVO.class);
+        userVO.setRoles(getRoles(user));
+        userVO.setPrivileges(getPrivileges(user));
+        userVO.setComms(userCommsService.getCommByUserId(user.getId()));
 
         return userVO;
     }
@@ -317,6 +307,21 @@ public class UsersService extends BaseService {
 
         redisTemplate.opsForValue().set(key, rand.toString(), 5, TimeUnit.MINUTES);
     }
+
+    private List<RoleVO> getRoles(UserDetailsCustom user) {
+        List<Integer> roleIds = userRolesService.selectByUserId(user.getId()).stream()
+                .map(UserRoles::getSaasRoleId).collect(Collectors.toList());
+
+        return rolesService.getMulti(roleIds).parallelStream().map(rolesService::getRoleVO)
+                .collect(Collectors.toList());
+    }
+
+    private List<Privileges> getPrivileges(UserDetailsCustom user) {
+        List<Integer> privilegeIds = userPrivilegesService.selectByUserId(user.getId()).stream()
+                .map(UserPrivileges::getSaasPrivilegeId).collect(Collectors.toList());
+        return privilegesService.getMulti(privilegeIds);
+    }
+
 
     public void checkUserList(UserBO userBO) {
         if (userBO.getRoleIds() != null && checkRoleIdList(userBO.getRoleIds())) {

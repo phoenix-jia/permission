@@ -1,6 +1,5 @@
 package com.famesmart.privilege.controller;
 
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.famesmart.privilege.entity.Privileges;
 import com.famesmart.privilege.entity.bo.PrivilegeBO;
 import com.famesmart.privilege.service.PrivilegesService;
@@ -29,12 +28,8 @@ public class PrivilegesController {
 
     @GetMapping(value = "/all")
     @ApiOperation(value = "全部权限获取", httpMethod = "GET")
-    public Result list(@ApiParam(name = "pageNum", value = "第几页")
-                       @RequestParam(defaultValue = "1") Integer pageNum,
-                       @ApiParam(name = "pageSize", value = "每一页显示的条数")
-                       @RequestParam(defaultValue = "10") Integer pageSize) {
-        Page<Privileges> aPage = privilegesService.page(new Page<>(pageNum, pageSize));
-        return Result.ok(aPage);
+    public Result list() {
+        return Result.ok(privilegesService.list());
     }
 
     @GetMapping(value = "/{id}")
@@ -52,7 +47,7 @@ public class PrivilegesController {
             return Result.error("missing resource/operation");
         }
         Privileges privilege = modelMapper.map(privilegeBO, Privileges.class);
-        privilegesService.save(privilege);
+        privilegesService.addPrivilege(privilege);
         return Result.ok(privilege);
     }
 
@@ -64,7 +59,7 @@ public class PrivilegesController {
                                          @RequestBody PrivilegeBO privilegeBO) {
         Privileges privilege = modelMapper.map(privilegeBO, Privileges.class);
         privilege.setId(id);
-        privilegesService.updateById(privilege);
+        privilegesService.update(privilege);
         return Result.ok();
     }
 

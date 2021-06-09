@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ServiceLogAspect {
 
-    @Around("execution(* com.famesmart.privilege.service..*.*(..))")
+    @Around("execution(* com.famesmart.privilege.controller..*.*(..))")
     public Object recordTimeLog(ProceedingJoinPoint joinPoint) throws Throwable {
 
         Class<?> clazz = joinPoint.getTarget().getClass();

@@ -1,13 +1,8 @@
 package com.famesmart.privilege.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.famesmart.privilege.entity.Privileges;
-import com.famesmart.privilege.entity.UserComms;
-import com.famesmart.privilege.entity.UserPrivileges;
 import com.famesmart.privilege.mapper.PrivilegesMapper;
-import com.famesmart.privilege.mapper.UserCommsMapper;
-import com.famesmart.privilege.mapper.UserPrivilegesMapper;
 import com.famesmart.privilege.util.JsonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -31,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges> {
 
-    static final String privilegePrefix = "privilege:";
+    static final String privilegeKey = "privilege";
 
     @Resource
     private PrivilegesMapper privilegesMapper;
@@ -45,20 +41,44 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @PostConstruct
+    private void init() {
+        redisTemplate.delete(privilegeKey);
+        List<Privileges> privileges = list();
+        for (Privileges privilege : privileges) {
+            updateCache(privilege);
+        }
+    }
+
+    public void addPrivilege(Privileges privilege) {
+        save(privilege);
+        getAndUpdateCache(privilege.getId());
+    }
+
+    public List<Privileges> getMulti(List<Integer> ids) {
+        List<Object> objects = ids.stream().map(Object::toString).collect(Collectors.toList());
+        List<Object> list = redisTemplate.opsForHash().multiGet(privilegeKey, objects);
+        List<Privileges> result = new ArrayList<>();
+        for (Object value : list) {
+            Privileges privilege = JsonUtils.jsonToObject((String) value, Privileges.class);
+            result.add(privilege);
+        }
+        return result;
+    }
+
     @Transactional(propagation = Propagation.SUPPORTS)
     public Privileges getById(Integer id) {
-        String key = privilegePrefix + id;
-        String privilegeStr = redisTemplate.opsForValue().get(key);
-        Privileges privilege;
+        String privilegeStr = (String) redisTemplate.opsForHash().get(privilegeKey, id.toString());
         if (StringUtils.isNotBlank(privilegeStr)) {
-            privilege = JsonUtils.jsonToObject(privilegeStr, Privileges.class);
+            return JsonUtils.jsonToObject(privilegeStr, Privileges.class);
         } else {
-            privilege = privilegesMapper.selectById(id);
-            privilegeStr = JsonUtils.objectToJson(privilege);
-            privilegeStr = privilegeStr != null ? privilegeStr : "null";
-            redisTemplate.opsForValue().set(key, privilegeStr, 12, TimeUnit.HOURS);
+            return getAndUpdateCache(id);
         }
-        return privilege;
+    }
+
+    public void update(Privileges privilege) {
+        updateById(privilege);
+        getAndUpdateCache(privilege.getId());
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -66,7 +86,7 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
         privilegesMapper.deleteById(id);
         userPrivilegesService.deleteByPrivilegeId(id);
         rolePrivilegesService.deleteByPrivilegeId(id);
-        invalidCache(id);
+        deleteCache(id);
     }
 
     public List<String> selectAllResource() {
@@ -77,7 +97,18 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
         return privilegesMapper.selectByResource(resource);
     }
 
-    public void invalidCache(Integer id) {
-        redisTemplate.delete(privilegePrefix + id);
+    public Privileges getAndUpdateCache(Integer id) {
+        Privileges privilege = privilegesMapper.selectById(id);
+        updateCache(privilege);
+        return privilege;
+    }
+
+    public void updateCache(Privileges privilege) {
+        String privilegeStr = JsonUtils.objectToJson(privilege);
+        redisTemplate.opsForHash().put(privilegeKey, privilege.getId().toString(), privilegeStr);
+    }
+
+    public void deleteCache(Integer id) {
+        redisTemplate.opsForHash().delete(privilegeKey, id.toString());
     }
 }

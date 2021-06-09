@@ -27,12 +27,8 @@ public class RolesController {
 
     @GetMapping(value = "/all")
     @ApiOperation(value = "所有角色获取", httpMethod = "GET")
-    public Result list(@ApiParam(name = "pageNum", value = "第几页")
-                       @RequestParam(defaultValue = "1") Integer pageNum,
-                       @ApiParam(name = "pageSize", value = "每一页显示的条数")
-                       @RequestParam(defaultValue = "10") Integer pageSize) {
-        Page<Roles> aPage = rolesService.page(new Page<>(pageNum, pageSize));
-        return Result.ok(aPage);
+    public Result list() {
+        return Result.ok(rolesService.list());
     }
 
     @GetMapping

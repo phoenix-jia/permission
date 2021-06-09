@@ -18,7 +18,6 @@ spring:
       idle-timeout: 600000
       pool-name: MyHikariCP
       max-lifetime: 1800000
-      connection-test-query: SELECT 1
   flyway:
     table: privilege_schema_history
     baseline-on-migrate: true

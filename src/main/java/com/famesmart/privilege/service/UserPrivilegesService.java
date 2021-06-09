@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -100,11 +101,11 @@ public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, Use
 
     @Transactional(propagation = Propagation.SUPPORTS)
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
-        return selectByUserId(userId).parallelStream()
-                .map(UserPrivileges::getSaasPrivilegeId)
-                .map(privilegesService::getById)
-                .anyMatch(privilege -> privilege.getResource().equals(resource)
-                        && privilege.getOperation().equals(operation));
+        List<Integer> privilegeIds = selectByUserId(userId).parallelStream()
+                .map(UserPrivileges::getSaasPrivilegeId).collect(Collectors.toList());
+        return privilegesService.getMulti(privilegeIds).stream().anyMatch(
+                privilege -> privilege.getResource().equals(resource) && privilege.getOperation().equals(operation));
+
     }
 
     private void invalidCache(Integer userId) {

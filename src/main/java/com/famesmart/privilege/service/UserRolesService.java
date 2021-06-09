@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -97,8 +98,8 @@ public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
     public boolean checkPrivilege(Integer userId, String resource, String operation) {
         return selectByUserId(userId).parallelStream()
                 .map(UserRoles::getSaasRoleId)
-                .map(rolesService::getRoleVOById)
-                .flatMap(roleVO -> roleVO.getPrivileges().stream())
+                .map(rolesService::getPrivilegesById)
+                .flatMap(Collection::stream)
                 .anyMatch(privilege -> privilege.getResource().equals(resource)
                         && privilege.getOperation().equals(operation));
     }

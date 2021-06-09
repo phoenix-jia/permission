@@ -16,16 +16,16 @@ public class JsonUtils {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        return null;
+        return "null";
     }
 
     public static <T> T jsonToObject(String jsonData, Class<T> type) {
         try {
             return objectMapper.readValue(jsonData, type);
         } catch (Exception e) {
-            e.printStackTrace();
+            return null;
         }
-        return null;
+
     }
 
 
@@ -34,8 +34,7 @@ public class JsonUtils {
         try {
             return objectMapper.readValue(jsonData, javaType);
         } catch (Exception e) {
-            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 }

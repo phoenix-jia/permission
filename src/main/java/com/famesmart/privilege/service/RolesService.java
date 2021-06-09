@@ -17,11 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 public class RolesService extends ServiceImpl<RolesMapper, Roles> {
 
-    static final String rolePrefix = "role:";
+    static final String roleKey = "role";
 
     @Resource
     private RolesMapper rolesMapper;
@@ -55,6 +53,14 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @PostConstruct
+    private void init() {
+        redisTemplate.delete(roleKey);
+        List<Roles> roles = list();
+        for (Roles role : roles) {
+            updateCache(role);
+        }
+    }
 
     public RoleVO getRoleVOByIdOrName(Integer id, String name) {
         return id != null ? getRoleVOById(id) : getRoleVOByName(name);
@@ -70,29 +76,42 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
 
     public RoleVO getRoleVOById(Integer id) {
         Roles role = getRoleById(id);
+        return getRoleVO(role);
+    }
+
+    public RoleVO getRoleVO(Roles role) {
         RoleVO roleVO = modelMapper.map(role, RoleVO.class);
-        List<Privileges> privileges =  rolePrivilegesService.selectByRoleId(id)
-                .parallelStream()
-                .map(RolePrivileges::getSaasPrivilegeId)
-                .map(privilegesService::getById)
-                .collect(Collectors.toList());
-        roleVO.setPrivileges(privileges);
+        roleVO.setPrivileges(getPrivilegesById(role.getId()));
         return roleVO;
     }
 
+    public List<Privileges> getPrivilegesById(Integer id) {
+        List<Integer> privileges = rolePrivilegesService
+                .selectByRoleId(id)
+                .stream()
+                .map(RolePrivileges::getSaasPrivilegeId)
+                .collect(Collectors.toList());
+        return privilegesService.getMulti(privileges);
+    }
+
     public Roles getRoleById(Integer id) {
-        String key = rolePrefix + id;
-        String roleStr = redisTemplate.opsForValue().get(key);
-        Roles role;
+        String roleStr = (String) redisTemplate.opsForHash().get(roleKey, id.toString());
         if (StringUtils.isNotBlank(roleStr)) {
-            role = JsonUtils.jsonToObject(roleStr, Roles.class);
+            return JsonUtils.jsonToObject(roleStr, Roles.class);
         } else {
-            role = rolesMapper.selectById(id);
-            roleStr = JsonUtils.objectToJson(role);
-            roleStr = roleStr != null ? roleStr : "null";
-            redisTemplate.opsForValue().set(key, roleStr, 12, TimeUnit.HOURS);
+            return getAndUpdateCache(id);
         }
-        return role;
+    }
+
+    public List<Roles> getMulti(List<Integer> ids) {
+        List<Object> objects = ids.stream().map(Object::toString).collect(Collectors.toList());
+        List<Object> list = redisTemplate.opsForHash().multiGet(roleKey, objects);
+        List<Roles> result = new ArrayList<>();
+        for (Object value : list) {
+            Roles role = JsonUtils.jsonToObject((String) value, Roles.class);
+            result.add(role);
+        }
+        return result;
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -110,6 +129,7 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
                 rolePrivilegesService.insertRolePrivilege(role.getId(), privilegeId);
             }
         }
+        getAndUpdateCache(role.getId());
         return role;
     }
 
@@ -141,7 +161,7 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
             });
         }
 
-        invalidCache(id);
+        getAndUpdateCache(id);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
@@ -149,15 +169,25 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
         removeById(id);
         userRolesService.deleteByRoleId(id);
         rolePrivilegesService.deleteByRoleId(id);
-        invalidCache(id);
+        deleteCache(id);
     }
 
     public boolean checkPrivilegeIdList(List<Integer> privilegeIdList) {
-        return !privilegeIdList.parallelStream().allMatch(privilegeId ->
-                privilegesService.getById(privilegeId) != null);
+        return privilegesService.getMulti(privilegeIdList).stream().anyMatch(Objects::isNull);
     }
 
-    public void invalidCache(Integer id) {
-        redisTemplate.delete(rolePrefix + id);
+    public Roles getAndUpdateCache(Integer id) {
+        Roles role = rolesMapper.selectById(id);
+        updateCache(role);
+        return role;
+    }
+
+    public void updateCache(Roles role) {
+        String roleStr = JsonUtils.objectToJson(role);
+        redisTemplate.opsForHash().put(roleKey, role.getId().toString(), roleStr);
+    }
+
+    public void deleteCache(Integer id) {
+        redisTemplate.opsForHash().delete(roleKey, id.toString());
     }
 }
