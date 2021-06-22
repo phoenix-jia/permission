@@ -5,7 +5,10 @@ import com.famesmart.privilege.entity.Privileges;
 import com.famesmart.privilege.mapper.PrivilegesMapper;
 import com.famesmart.privilege.util.JsonUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,7 +28,7 @@ import java.util.stream.Collectors;
  * @since 2021-05-27
  */
 @Service
-public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges> {
+public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges> implements ApplicationListener<ContextRefreshedEvent> {
 
     static final String privilegeKey = "privilege";
 
@@ -41,8 +44,8 @@ public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges>
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @PostConstruct
-    private void init() {
+    @Override
+    public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
         redisTemplate.delete(privilegeKey);
         List<Privileges> privileges = list();
         for (Privileges privilege : privileges) {

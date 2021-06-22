@@ -10,8 +10,11 @@ import com.famesmart.privilege.entity.vo.RoleVO;
 import com.famesmart.privilege.mapper.RolesMapper;
 import com.famesmart.privilege.util.JsonUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,7 +34,7 @@ import java.util.stream.Collectors;
  * @since 2021-05-27
  */
 @Service
-public class RolesService extends ServiceImpl<RolesMapper, Roles> {
+public class RolesService extends ServiceImpl<RolesMapper, Roles> implements ApplicationListener<ContextRefreshedEvent> {
 
     static final String roleKey = "role";
 
@@ -53,8 +56,8 @@ public class RolesService extends ServiceImpl<RolesMapper, Roles> {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @PostConstruct
-    private void init() {
+    @Override
+    public void onApplicationEvent(@NotNull ContextRefreshedEvent contextRefreshedEvent) {
         redisTemplate.delete(roleKey);
         List<Roles> roles = list();
         for (Roles role : roles) {
