@@ -60,7 +60,7 @@ public class UserDetailsCustomService extends BaseService implements UserDetails
     queryWrapper.eq("username", username);
     Users user = usersMapper.selectOne(queryWrapper);
     if (user == null) {
-      throw new UsernameNotFoundException("User not found with username : " + username);
+      throw new UsernameNotFoundException("User not found with username: " + username);
     }
     return UserDetailsCustom.create(user);
   }
