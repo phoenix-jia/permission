@@ -84,7 +84,7 @@ public class Comms implements Serializable {
     @ApiModelProperty(value = "客流墓园子类型")
     private Integer subType;
 
-    @ApiModelProperty(value = "系数")
-    private Double fix;
+//    @ApiModelProperty(value = "系数")
+//    private Double fix;
 
 }

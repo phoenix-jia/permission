@@ -27,15 +27,15 @@ public class AuthController {
     @ApiOperation(value = "登录", httpMethod = "POST")
     public Result login(@RequestBody @Valid LoginBO loginBO,
                         @ApiIgnore BindingResult bindingResult,
-                        @ApiIgnore HttpServletRequest request){
+                          @ApiIgnore HttpServletRequest request){
         if (bindingResult.hasErrors()) {
             return Result.error("invalid username or password");
         }
         return Result.ok(authService.login(loginBO, request));
     }
 
-    @GetMapping("/refresh")
-    @ApiOperation(value = "更新token", httpMethod = "GET")
+    @PostMapping("/refresh")
+    @ApiOperation(value = "更新token", httpMethod = "POST")
     public Result refresh(@ApiIgnore @AuthenticationPrincipal UserDetailsCustom userDetailsCustom){
         return Result.ok(authService.refresh(userDetailsCustom));
     }

@@ -11,5 +11,6 @@
         inner join comm_alarms b
         on a.comm_alarm_id = b.id
         where saas_user_id = #{userId}
+        and a.deleted_at is null
     </select>
 </mapper>

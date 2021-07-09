@@ -142,7 +142,7 @@ public class UsersController {
     @GetMapping("/comm")
     @ApiOperation(value = "用户社区获取", httpMethod = "GET")
     public Result getUserComm(@ApiIgnore @AuthenticationPrincipal UserDetailsCustom userDetailsCustom,
-                              @ApiParam(name = "userId", value = "用户ID", required = false)
+                                @ApiParam(name = "userId", value = "用户ID", required = false)
                               @RequestParam(required = false) Integer userId,
                               @ApiParam(name = "username", value = "用户名", required = false)
                               @RequestParam(required = false) String username) {

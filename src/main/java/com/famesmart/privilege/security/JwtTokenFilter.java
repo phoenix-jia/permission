@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Enumeration;
 
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
@@ -39,6 +40,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     } catch (RuntimeException ex) {
       String contentType = "application/json; charset=UTF-8";
       httpServletResponse.setContentType(contentType);
+      httpServletResponse.setStatus(403);
       httpServletResponse.getWriter().write(objectMapper.writeValueAsString(Result.error(ex.getMessage())));
       return;
     }

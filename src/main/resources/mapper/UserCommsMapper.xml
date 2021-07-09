@@ -8,6 +8,7 @@
         inner join comms c
         on a.comm_id = c.id
         where a.saas_user_id = #{userId}
+        and a.deleted_at is null
     </select>
 
     <select id="selectUserByCommCode" resultType="com.famesmart.privilege.entity.Users">
@@ -18,6 +19,8 @@
         inner join saas_users su
         on suc.saas_user_id = su.id
         where c.comm_code = #{commCode}
+        and suc.deleted_at is null
+        and su.deleted_at is null
     </select>
 
 </mapper>

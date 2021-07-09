@@ -7,6 +7,7 @@
                count(*) as login_times
         from v2_login_records
         where username = #{username}
+        and deleted_at is null
         group by client_ip
         order by login_times desc
         limit 1

@@ -8,8 +8,8 @@ spring:
     active: ${NODE_ENV:dev}
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    username: ${DB_USERNAME:saas}
-    password: ${DB_PASSWORD:saas1234}
+    username: ${DB_USERNAME:jhw}
+    password: ${DB_PASSWORD:354570Wjh!}
     hikari:
       connection-timeout: 30000
       minimum-idle: 5

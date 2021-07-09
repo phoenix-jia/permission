@@ -9,5 +9,9 @@
         where sur.saas_user_id = #{userId}
         and sp.resource = #{resource}
         and sp.operation = #{operation}
+        and sur.deleted_at is null
+        and sr.deleted_at is null
+        and srp.deleted_at is null
+        and sp.deleted_at is null
     </select>
 </mapper>

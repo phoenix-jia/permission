@@ -41,7 +41,7 @@ public class UserDetailsCustomService extends BaseService implements UserDetails
       } else {
         user = usersMapper.selectById(id);
         userStr = objectMapper.writeValueAsString(user);
-        redisTemplate.opsForValue().set(key, userStr, 12, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(key, userStr, 30, TimeUnit.MINUTES);
       }
     } catch (JsonProcessingException e) {
       e.printStackTrace();

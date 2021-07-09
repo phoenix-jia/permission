@@ -28,7 +28,6 @@ public class JsonUtils {
 
     }
 
-
     public static <T> List<T> jsonToList(String jsonData, Class<T> type) {
         JavaType javaType = objectMapper.getTypeFactory().constructParametricType(List.class, type);
         try {

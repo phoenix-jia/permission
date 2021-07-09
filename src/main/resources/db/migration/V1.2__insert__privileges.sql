@@ -65,11 +65,11 @@ insert into `v2_saas_privileges` (`resource`, `operation`, `resource_zh`) values
 ('person_control', 'delete', '人员布控'),
 ('person_control', 'review', '人员布控'),
 
-('vehicle_info', 'create', '车辆布控'),
-('vehicle_info', 'retrieve', '车辆布控'),
-('vehicle_info', 'update', '车辆布控'),
-('vehicle_info', 'delete', '车辆布控'),
-('vehicle_info', 'review', '车辆布控'),
+('vehicle_control', 'create', '车辆布控'),
+('vehicle_control', 'retrieve', '车辆布控'),
+('vehicle_control', 'update', '车辆布控'),
+('vehicle_control', 'delete', '车辆布控'),
+('vehicle_control', 'review', '车辆布控'),
 
 ('work_entry', 'create', '工单列表'),
 ('work_entry', 'retrieve', '工单列表'),
