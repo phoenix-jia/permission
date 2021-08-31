@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @Service
 public class PrivilegesService extends ServiceImpl<PrivilegesMapper, Privileges> implements ApplicationListener<ContextRefreshedEvent> {
 
-    static final String privilegeKey = "privilege";
+    static final String privilegeKey = "saas_privilege";
 
     @Resource
     private PrivilegesMapper privilegesMapper;

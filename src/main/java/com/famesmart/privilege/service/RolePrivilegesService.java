@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, RolePrivileges> {
 
-    static final String rolePrivilegesPrefix = "rolePrivileges:";
+    static final String rolePrivilegesPrefix = "saas_rolePrivileges:";
 
     @Autowired
     StringRedisTemplate redisTemplate;
@@ -88,8 +88,8 @@ public class RolePrivilegesService extends ServiceImpl<RolePrivilegesMapper, Rol
         invalidCache(roleId);
     }
 
-    public void invalidCache(Integer id) {
-        redisTemplate.delete(rolePrivilegesPrefix + id);
+    public void invalidCache(Integer roleId) {
+        redisTemplate.delete(rolePrivilegesPrefix + roleId);
     }
 
 }

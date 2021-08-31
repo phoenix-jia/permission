@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 public class UserPrivilegesService extends ServiceImpl<UserPrivilegesMapper, UserPrivileges> {
 
-    static final String userPrivilegePrefix = "userPrivilege:";
+    static final String userPrivilegePrefix = "saas_userPrivilege:";
 
     @Resource
     private UserPrivilegesMapper userPrivilegesMapper;

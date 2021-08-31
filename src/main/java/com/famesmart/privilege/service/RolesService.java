@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @Service
 public class RolesService extends ServiceImpl<RolesMapper, Roles> implements ApplicationListener<ContextRefreshedEvent> {
 
-    static final String roleKey = "role";
+    static final String roleKey = "saas_role";
 
     @Resource
     private RolesMapper rolesMapper;

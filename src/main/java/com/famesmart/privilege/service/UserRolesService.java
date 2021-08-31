@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
 
-    static final String userRolePrefix = "userRole:";
+    static final String userRolePrefix = "saas_userRole:";
 
     @Resource
     private UserRolesMapper userRolesMapper;
