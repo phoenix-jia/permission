@@ -1,4 +1,4 @@
 spring:
   datasource:
     driver-class-name: com.p6spy.engine.spy.P6SpyDriver
-    url:  jdbc:p6spy:mysql://${DB_HOST:rm-uf6b117qd1xsct2o90o.mysql.rds.aliyuncs.com}:${DB_PORT:3306}/${DB_DATABASE:db_saas_manager_pre}?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+    url:  jdbc:p6spy:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_DATABASE:db}?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8

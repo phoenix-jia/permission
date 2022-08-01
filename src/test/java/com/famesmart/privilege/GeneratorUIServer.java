@@ -7,9 +7,9 @@ import com.github.davidfantasy.mybatisplus.generatorui.mbp.NameConverter;
 public class GeneratorUIServer {
 
     public static void main(String[] args) {
-        GeneratorConfig config = GeneratorConfig.builder().jdbcUrl("jdbc:mysql://10.0.0.103:3306/db_saas_manager?nullCatalogMeansCurrent=true")
-                .userName("saas")
-                .password("saas1234")
+        GeneratorConfig config = GeneratorConfig.builder().jdbcUrl("jdbc:mysql://localhost:3306/db_saas_manager?nullCatalogMeansCurrent=true")
+                .userName("root")
+                .password("1")
                 .driverClassName("com.mysql.cj.jdbc.Driver")
                 //数据库schema，POSTGRE_SQL,ORACLE,DB2类型的数据库需要指定
                 .schemaName("db_saas_manager")

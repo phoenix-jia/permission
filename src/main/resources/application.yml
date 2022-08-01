@@ -8,8 +8,8 @@ spring:
     active: ${NODE_ENV:dev}
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    username: ${DB_USERNAME:jhw}
-    password: ${DB_PASSWORD:354570Wjh!}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:!}
     hikari:
       connection-timeout: 30000
       minimum-idle: 5
@@ -37,10 +37,10 @@ spring:
           max-attempts: 3
 
   redis:
-    host: ${REDIS_HOST:10.0.0.103}
+    host: ${REDIS_HOST:10.0.0.1}
     port: ${REDIS_PORT:6379}
     database: ${REDIS_DB:8}
-    password: ${REDIS_PASSWORD:redis@fame!2019}
+    password: ${REDIS_PASSWORD:}
 
 mybatis-plus:
   global-config:
