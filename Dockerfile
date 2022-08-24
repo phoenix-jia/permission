@@ -1,4 +1,4 @@
-FROM registry.cn-shanghai.aliyuncs.com/fame/maven:3-jdk-8
+FROM registry.cn-shanghai.aliyuncs.com/aaaa/maven:3-jdk-8
 WORKDIR /usr/src/app
 RUN echo "Asia/Shanghai" > /etc/timezone && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

@@ -6,14 +6,6 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
-/**
- * <p>
- *  Mapper 接口
- * </p>
- *
- * @author Jianhang.Wu
- * @since 2021-05-27
- */
 public interface PrivilegesMapper extends BaseMapper<Privileges> {
 
     @Select("select resource from v2_saas_privileges where deleted_at is null group by resource")

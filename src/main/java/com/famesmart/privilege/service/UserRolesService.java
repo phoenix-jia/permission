@@ -17,14 +17,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * <p>
- *  服务实现类
- * </p>
- *
- * @author Jiaxu.Li
- * @since 2021-05-27
- */
 @Service
 public class UserRolesService extends ServiceImpl<UserRolesMapper, UserRoles> {
 
